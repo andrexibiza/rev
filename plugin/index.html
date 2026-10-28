@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>REV REGISTRY — Cross-Repo Ops Console</title>
+<meta name="description" content="Rev cross-repo registry, interlock list, lane board (states only) and receipts ledger. GraphQL-first; demo data is labeled.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#registry">Skip to registry</a>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">REV</span>
+    <span class="brand-sub">REGISTRY / OPS CONSOLE</span>
+  </div>
+  <div class="top-meta">
+    <span id="sourceBadge" class="badge badge-demo" data-source="boot">BOOT</span>
+    <span id="connStatus" class="conn" role="status" aria-live="polite">CONNECTING…</span>
+    <span id="pinEcho" class="pin-echo" title="Resolved pin (sha · generation · policyHash)">PIN —</span>
+  </div>
+  <div class="top-actions">
+    <label class="field field-endpoint">
+      <span class="field-label">GraphQL endpoint</span>
+      <input id="endpointInput" type="url" spellcheck="false" autocomplete="off"
+        value="http://localhost:8787/graphql" aria-label="GraphQL endpoint URL">
+    </label>
+    <button id="btnRefresh" type="button" class="btn btn-primary">REFRESH [R]</button>
+    <button id="btnExport" type="button" class="btn">EXPORT JSON</button>
+  </div>
+</header>
+
+<div id="demoBanner" class="banner" role="alert" hidden>
+  <strong>DEMO DATA — NOT LIVE.</strong>
+  GraphQL endpoint unreachable or returned no registry data. Showing labeled fixture data shaped to
+  <span class="mono">schema.md</span> (Relay connections, <span class="mono">Pin</span>, <span class="mono">Receipt</span>).
+  No action taken on this data affects any repo. Connect a Rev GraphQL server and REFRESH for live data.
+</div>
+<div id="errorBanner" class="banner banner-error" role="alert" hidden></div>
+
+<nav class="section-nav" aria-label="Console sections">
+  <a href="#registry">01 REGISTRY</a>
+  <a href="#interlocks">02 INTERLOCKS</a>
+  <a href="#lanes">03 LANE BOARD · STATES ONLY</a>
+  <a href="#ledger">04 RECEIPTS / LEDGER</a>
+  <span class="nav-hint">/ search &nbsp;·&nbsp; R refresh &nbsp;·&nbsp; click row = inspector</span>
+</nav>
+
+<section class="filters" aria-label="Registry filters">
+  <form id="filterForm" autocomplete="off">
+    <label class="field grow">
+      <span class="field-label">Search (id / repo / path / advisory / title)</span>
+      <input id="fSearch" type="search" placeholder="e.g. GHSA- / discount / rev:repo:" aria-label="Search registry">
+    </label>
+    <label class="field">
+      <span class="field-label">Repo</span>
+      <select id="fRepo" aria-label="Filter by repository"><option value="">ALL REPOS</option></select>
+    </label>
+    <label class="field">
+      <span class="field-label">Operation</span>
+      <select id="fOperation" aria-label="Filter by operation">
+        <option value="">ALL OPS</option>
+        <option>REVIEW</option><option>FIX</option><option>IMPLEMENT</option>
+        <option>DIAGRAM</option><option>AUDIT_TESTS</option><option>RESPOND</option>
+        <option>TRIAGE</option><option>MERGE</option>
+      </select>
+    </label>
+    <label class="field">
+      <span class="field-label">Settlement state</span>
+      <select id="fState" aria-label="Filter by settlement state">
+        <option value="">ALL STATES</option>
+        <option>QUEUED</option><option>CLAIMED</option><option>RUNNING</option>
+        <option>COMPLETED</option><option>FAILED</option><option>CANCELLED</option>
+        <option>EXPIRED</option><option>INDETERMINATE</option>
+        <option>SHIPPED</option><option>MERGED</option><option>NO_ACTION</option>
+      </select>
+    </label>
+    <label class="field">
+      <span class="field-label">Finding kind</span>
+      <select id="fKind" aria-label="Filter by finding kind">
+        <option value="">ALL KINDS</option>
+        <option>DEFECT</option><option>SECURITY</option><option>BAD_TEST</option>
+        <option>REGRESSION</option><option>CONTRACT</option><option>PERFORMANCE</option>
+        <option>RELIABILITY</option><option>DATA</option><option>API</option>
+        <option>SUPPLY_CHAIN</option><option>RELEASE</option><option>OBSERVABILITY</option>
+      </select>
+    </label>
+    <fieldset class="toggles">
+      <legend class="field-label">Required filters (Day-6)</legend>
+      <label class="toggle"><input id="fAwaiting" type="checkbox"> AWAITING MAINTAINER</label>
+      <label class="toggle"><input id="fReachable" type="checkbox"> REACHABLE</label>
+      <label class="toggle"><input id="fIndeterminate" type="checkbox"> INDETERMINATE</label>
+    </fieldset>
+    <div class="filter-actions">
+      <button id="btnClearFilters" type="button" class="btn">CLEAR</button>
+      <label class="toggle toggle-inline"><input id="fAuto" type="checkbox"> AUTO 15s</label>
+    </div>
+  </form>
+  <p class="filter-note">
+    Filters compose (AND). Server-side <span class="mono">RegistryFilterInput</span> is sent when live;
+    the same predicates run client-side so demo and live views reconcile. <span class="mono">SHIPPED ≠ MERGED</span>.
+  </p>
+</section>
+
+<section class="stats" aria-label="Registry totals">
+  <div class="stat"><span class="stat-k">REPOS</span><strong id="stRepos">—</strong></div>
+  <div class="stat"><span class="stat-k">WORK EVENTS</span><strong id="stEvents">—</strong></div>
+  <div class="stat"><span class="stat-k">AWAITING MAINTAINER</span><strong id="stAwaiting">—</strong></div>
+  <div class="stat"><span class="stat-k">REACHABLE ADVISORIES</span><strong id="stReachable">—</strong></div>
+  <div class="stat"><span class="stat-k">INDETERMINATE</span><strong id="stIndeterminate">—</strong></div>
+  <div class="stat"><span class="stat-k">MERGED (VERIFIED ON MAIN)</span><strong id="stMerged">—</strong></div>
+  <div class="stat stat-wide"><span class="stat-k">LAST SYNC</span><strong id="stSync">—</strong></div>
+</section>
+
+<main>
+  <section id="registry" class="panel" aria-labelledby="h-registry">
+    <div class="panel-head">
+      <h2 id="h-registry">01 / CROSS-REPO REGISTRY</h2>
+      <span id="registryCount" class="count">—</span>
+    </div>
+    <p class="panel-sub">Every repo, every Rev PR/review as <span class="mono">WorkEvent</span> (schema.md §6 <span class="mono">registry</span> query). One row = one pinned settlement. Select a row for the inspector.</p>
+    <div class="table-wrap">
+      <table class="table" id="registryTable">
+        <thead><tr>
+          <th scope="col">Work event</th><th scope="col">Repo</th><th scope="col">Op</th>
+          <th scope="col">State</th><th scope="col">Pin (sha · gen)</th>
+          <th scope="col">Findings / repair</th><th scope="col">Receipt</th><th scope="col">Updated</th>
+        </tr></thead>
+        <tbody id="registryBody"><tr><td colspan="8" class="empty">LOADING…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="interlocks" class="panel" aria-labelledby="h-interlocks">
+    <div class="panel-head">
+      <h2 id="h-interlocks">02 / INTERLOCK LIST</h2>
+      <span id="interlockCount" class="count">—</span>
+    </div>
+    <p class="panel-sub"><span class="mono">Repair —PROJECTS_TO→ PullRequestProjection</span> and <span class="mono">Finding —ADDRESSES← Repair</span>. Source PR/issue and fix PR are linked both ways; credit follows the source authors. GitHub is the projection — Rev objects are truth.</p>
+    <div class="table-wrap">
+      <table class="table" id="interlockTable">
+        <thead><tr>
+          <th scope="col">Repair</th><th scope="col">Addresses</th><th scope="col">Projection (GitHub PR)</th>
+          <th scope="col">Head → base</th><th scope="col">State</th><th scope="col">Verdicts (fresh)</th>
+        </tr></thead>
+        <tbody id="interlockBody"><tr><td colspan="6" class="empty">LOADING…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="lanes" class="panel" aria-labelledby="h-lanes">
+    <div class="panel-head">
+      <h2 id="h-lanes">03 / LANE BOARD — STATES ONLY</h2>
+      <span id="laneCount" class="count">—</span>
+    </div>
+    <p class="panel-sub">Blind-lane execution states, input/output digests and verdicts only. <strong>No chain-of-thought is a field, an attribute, or streamed</strong> (schema.md §7). Analyst/witness input digests must be disjoint — check the digests, never the reasoning.</p>
+    <div class="table-wrap">
+      <table class="table" id="laneTable">
+        <thead><tr>
+          <th scope="col">Trace / work event</th><th scope="col">Lane</th><th scope="col">State</th>
+          <th scope="col">Verdict</th><th scope="col">Input digests</th><th scope="col">Output digest</th><th scope="col">Span</th>
+        </tr></thead>
+        <tbody id="laneBody"><tr><td colspan="7" class="empty">LOADING…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="ledger" class="panel" aria-labelledby="h-ledger">
+    <div class="panel-head">
+      <h2 id="h-ledger">04 / RECEIPTS — LEDGER</h2>
+      <span id="ledgerCount" class="count">—</span>
+    </div>
+    <p class="panel-sub">Settlement receipts are value-free: identities, hashes, reason codes, generations only — never secret values (schema.md §2). <span class="mono">INDETERMINATE</span> must reconcile against <span class="mono">main</span>; it is never blind-retried.</p>
+    <div class="table-wrap">
+      <table class="table" id="ledgerTable">
+        <thead><tr>
+          <th scope="col">Receipt</th><th scope="col">Settles</th><th scope="col">State</th>
+          <th scope="col">Reason code</th><th scope="col">Outcome digest</th><th scope="col">Merge SHA</th><th scope="col">Created</th>
+        </tr></thead>
+        <tbody id="ledgerBody"><tr><td colspan="7" class="empty">LOADING…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-inspector">
+    <div class="panel-head">
+      <h2 id="h-inspector">INSPECTOR</h2>
+      <span class="count" id="inspectorHint">NO SELECTION</span>
+    </div>
+    <div id="inspector" class="inspector">
+      <p class="empty">Select a registry row. Inspector shows pin, proof digest, findings with evidence basis, advisory reachability path kinds, and the receipt chain for that work event. Dispatch (review/fix/respond) is a GraphQL mutation requiring a current <span class="mono">ProofObject</span> — this static console is read-only and never fabricates authority.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span>CONTRACT schema.md v0.1.0 · GraphQL only · No REST shadow API</span>
+  <span id="queryInfo">QUERY registry + repositories (Relay)</span>
+  <span>RECEIPTS VALUE-FREE · PINS: SHA + GENERATION + POLICYHASH</span>
+</footer>
+
+<noscript><p class="banner">JavaScript required. This console renders no data without it; the GraphQL contract is in schema.md §5–§6.</p></noscript>
+<script src="app.js" defer></script>
+</body>
+</html>

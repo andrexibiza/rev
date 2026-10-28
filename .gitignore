@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.*
+!.env.example
+*.log
+queue.json
+*.tmp-*
+.DS_Store
+desktop-plugins/

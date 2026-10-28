@@ -1,0 +1,9 @@
+{
+  "id": "rev-registry",
+  "name": "Rev Registry",
+  "version": "0.3.0",
+  "description": "Severe agent-native registry: cross-repo Rev reviews, interlock, lanes, receipts. GraphQL-first.",
+  "entry": "index.html",
+  "graphqlEndpointDefault": "http://localhost:8787/graphql",
+  "assumptions": "Hermes Desktop plugin packaging API unverified at build time (plan Risks). This manifest + static entry is the portable form; localhost web UI is the fallback with identical objects."
+}

@@ -1,0 +1,14 @@
+{
+  "name": "rev-demo-fixture",
+  "private": true,
+  "type": "module",
+  "description": "Planted demo fixtures. Do not install for production. Vulnerable pin is intentional and labeled.",
+  "dependencies": {
+    "demo-reachable-lib": "1.0.0",
+    "demo-unreachable-lib": "1.0.0"
+  },
+  "revFixtures": {
+    "reachable": "demo-reachable-lib vulnerable function is called from request path (Act 3: fix PR expected)",
+    "unreachable": "demo-unreachable-lib version-matched but never imported (Act 3: NO_ACTION receipt expected)"
+  }
+}

@@ -1,0 +1,16 @@
+# Reference: Ownership + Routing (per-repo authority in practice)
+
+CODEOWNERS mechanics: locations root/.github/docs first-found wins (GitHub docs), patterns, team visibility + write requirement, base-branch version governs PR. Rev extensions: resolution at base pin echoed in trace; owners per touched path + radius owners (consumers) suggested as additional (non-required) reviewers; required approvals from branch protection, never inferred from CODEOWNERS alone.
+
+No-CODEOWNERS repos: fallback ladder declared per repo (explicit policy file > default-branch protection reviewers > repo admins as routing only — routing never grants merge beyond platform). Solo maintainer: Rev optimizes for their attention (batched, radius-sorted queue, no nag duplicates). Corporate: team SLAs as repo policy data (declared, not assumed), escalation paths. Community: maintainer vs diligent contributor distinction visible in UI (badges from platform permissions only).
+
+Load algorithms declared per repo: round-robin (least recent) vs load-balance (30-day outstanding) + Busy exclusion (GitHub team assignment semantics mirrored for lane+human routing). Reviewer suggestion learning: acceptance history by seam (familiarity) with plateau awareness; never route by raw seniority.
+
+## Deep patterns
+Ownership decay: owners leaving/teams renaming — generation change invalidates routing cache; quarterly ownership census vs graph (files without owners = debt manifested with interim routing). CODEOWNERS anti-patterns: * single owner bottleneck (load + bus factor findings), patterns shadowed by later rules misunderstanding (last-match semantics taught with examples), owners without write (platform-invalid, gate catches).
+Escalation design: awaiting-maintainer digests, SLA by radius (declared),delegate/acting maintainer grants explicit + expiring (authority objects, audit logged). Rev never routes around maintainer silence by merging — silence settles as awaiting, visible, aged.
+
+## Branch protection + rulesets (GitHub mechanics, fetched 2026-10-27)
+Protection dimensions Rev must read per branch (not assume): required PR reviews (count, CODEOWNER approval toggle, dismiss stale on push — platform enforces Invariant 5 partially; Rev still range-diffs), required status checks (unique job names warning: duplicate names create ambiguous results — Rev check runs use unique namespaced contexts `rev/review`, `rev/fix-verify`), conversation resolution, signed commits, linear history, merge queue, required deployments, lock, bypass lists + admin bypass defaults (restrictions by default do not apply to admins — bypass is platform authority fact recorded in AuthorityMap; Rev merge revalidation reads bypass state, never treats protection as absolute when bypass exists), push restrictions, force-push/deletion allowances.
+Rulesets supersede single-rule limits (multiple protections, fnmatch patterns like *release*); conversion path noted. Merge queue interaction: queued merges revalidate against moving main (generation churn — Rev receipts bind queue generation). Auto-merge configuration: enabling auto-merge is maintainer grant act; Rev records grant identity, never self-enables.
+Source: GitHub Docs, About protected branches (docs.github.com, fetched this build).

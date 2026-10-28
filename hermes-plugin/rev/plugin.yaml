@@ -1,0 +1,9 @@
+name: rev
+version: 0.4.0
+description: Rev — automated code review and implementation machine. Reviews, fix PRs, advisory response under Nothing Ambient Survives.
+author: Axl Ibiza
+provides_tools:
+  - rev_demo_review
+  - rev_registry
+  - rev_triage
+provides_hooks: []
