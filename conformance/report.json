@@ -1,0 +1,220 @@
+{
+  "kind": "federation-conformance",
+  "version": "0.1.0",
+  "pin": {
+    "sha": "033617c937e8598cdb9c9e02cd8cea17092d7203",
+    "generation": "gen-conformance-1",
+    "policyHash": "policy-v1"
+  },
+  "generatedAt": "2026-10-28T13:15:26.844Z",
+  "root": ".",
+  "witnesses": [
+    {
+      "id": "W-A1",
+      "category": "W-A",
+      "family": "Authority",
+      "title": "Widening grants refused (AUTHORITY_WIDENING)",
+      "invariant": "Inv3 (authority only narrows)",
+      "pass": true,
+      "detail": "validateProof refused widened grants [repo:read, repo:write] beyond parent [repo:read] with AUTHORITY_WIDENING; equal grants pass.",
+      "evidence": {
+        "wideningReasonCode": "AUTHORITY_WIDENING",
+        "narrowPassed": true,
+        "source": "src/types.mjs:validateProof"
+      }
+    },
+    {
+      "id": "W-A2",
+      "category": "W-A",
+      "family": "Authority",
+      "title": "Stale generation at use refused (PROOF_STALE_GENERATION)",
+      "invariant": "Inv3/Inv8 (generation fencing, composite identity)",
+      "pass": true,
+      "detail": "validateProof refused generation gen-2 against parent gen-1 with PROOF_STALE_GENERATION; same-generation proof passes.",
+      "evidence": {
+        "staleReasonCode": "PROOF_STALE_GENERATION",
+        "freshPassed": true,
+        "source": "src/types.mjs:validateProof"
+      }
+    },
+    {
+      "id": "W-S1",
+      "category": "W-S",
+      "family": "Settlement",
+      "title": "Duplicate delivery replays (side-effect count 1)",
+      "invariant": "Inv7 (settlement is typed and honest)",
+      "pass": true,
+      "detail": "DurableQueue replayed duplicate idempotencyKey with original event id and write-once receipt; queue size stayed 1 before and after ACK.",
+      "evidence": {
+        "eventId": "we_mvs50a9l_2d5a6ddc85d3",
+        "replayBeforeReusedId": true,
+        "receiptId": "rc_mvs50a9o_a7odtq",
+        "replayAfterReceiptMatches": true,
+        "queueSize": 1,
+        "sideEffectCount": 1,
+        "source": "src/queue.mjs:DurableQueue.enqueue/ack"
+      }
+    },
+    {
+      "id": "W-E1",
+      "category": "W-E",
+      "family": "Evidence",
+      "title": "Insensitive test cited as sole distinguisher collapses safety claim",
+      "invariant": "Inv6 (evidence must be able to fail)",
+      "pass": true,
+      "detail": "sensitivityProbe marked base-pass/mutant-fail as sensitive and always-pass as insensitive; adjudicate blocked the insensitive case with BAD_TEST (BLOCKING) and approved the sensitive case.",
+      "evidence": {
+        "sensitive": true,
+        "insensitiveSensitive": false,
+        "sensitiveVerdict": "APPROVE",
+        "insensitiveVerdict": "REQUEST_CHANGES",
+        "badTestKind": "BAD_TEST",
+        "badTestDisposition": "BLOCKING",
+        "source": "src/factory.mjs:sensitivityProbe/adjudicate"
+      }
+    },
+    {
+      "id": "W-P1",
+      "category": "W-P",
+      "family": "Process",
+      "title": "Ambient spawn (no broker intent) fails gate; direct spawn outside broker fails gate",
+      "invariant": "Inv2/Inv10 (nothing ambient survives; no rule counts until it executes)",
+      "pass": true,
+      "detail": "Scanned 20 src/*.mjs files; 2 spawn hit(s) confined to allowlisted broker/queue files, 0 violations.",
+      "evidence": {
+        "scannedFiles": [
+          "src/app.mjs",
+          "src/authority-map.mjs",
+          "src/crisis.mjs",
+          "src/demo.mjs",
+          "src/factory.mjs",
+          "src/fixlane.mjs",
+          "src/github.mjs",
+          "src/graph.mjs",
+          "src/graphql.mjs",
+          "src/ingest.mjs",
+          "src/model.mjs",
+          "src/projector.mjs",
+          "src/queue.mjs",
+          "src/review.mjs",
+          "src/traces.mjs",
+          "src/transparency.mjs",
+          "src/types.mjs",
+          "src/watcher.mjs",
+          "src/webhook.mjs",
+          "src/worker.mjs"
+        ],
+        "allowlist": [
+          {
+            "path": "src/factory.mjs",
+            "role": "broker",
+            "rationale": "Test-execution broker: sole child_process site (runNodeTest) with fixed argv execFileSync(process.execPath, ['--test', file], { stdio: 'pipe' }), no shell."
+          },
+          {
+            "path": "src/queue.mjs",
+            "role": "queue",
+            "rationale": "Durable settlement queue (broker boundary for admission/lease/settlement). No spawn primitive today; allowlisted as the queue broker boundary per task."
+          }
+        ],
+        "allowlistedHits": [
+          {
+            "file": "src/factory.mjs",
+            "line": 3,
+            "text": "import { execFileSync } from \"node:child_process\";"
+          },
+          {
+            "file": "src/factory.mjs",
+            "line": 73,
+            "text": "try { execFileSync(process.execPath, [\"--test\", file], { stdio: \"pipe\" }); return true; }"
+          }
+        ],
+        "violations": [],
+        "source": "conformance/run.mjs:scanAmbientSpawns (grep over src/*.mjs)"
+      }
+    },
+    {
+      "id": "W-G1",
+      "category": "W-G",
+      "family": "Graph",
+      "title": "AFFECTS without reachability proof never renders as REACHES",
+      "invariant": "Inv (schema §4: coordinates select, proof authorizes — AFFECTS != REACHES)",
+      "pass": true,
+      "detail": "REACHES without evidence refused at write (REACHES_EVIDENCE_REQUIRED); AFFECTS listed only via affectedEntities, REACHES only via reachableEntities after proven-path evidence.",
+      "evidence": {
+        "reachesWithoutEvidenceRefused": true,
+        "refusalCode": "REACHES_EVIDENCE_REQUIRED",
+        "affected": [
+          "lib"
+        ],
+        "reachable": [
+          "core"
+        ],
+        "reachableAfterAffectsOnly": [],
+        "source": "src/graph.mjs:KnowledgeGraph.addEdge/affectedEntities/reachableEntities"
+      }
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "allPass": true
+  },
+  "invariantCoverage": [
+    {
+      "invariant": "Inv2",
+      "witnesses": [
+        "W-P1"
+      ]
+    },
+    {
+      "invariant": "Inv3",
+      "witnesses": [
+        "W-A1",
+        "W-A2"
+      ]
+    },
+    {
+      "invariant": "Inv6",
+      "witnesses": [
+        "W-E1"
+      ]
+    },
+    {
+      "invariant": "Inv7",
+      "witnesses": [
+        "W-S1"
+      ]
+    },
+    {
+      "invariant": "Inv8",
+      "witnesses": [
+        "W-A2"
+      ]
+    },
+    {
+      "invariant": "Inv10",
+      "witnesses": [
+        "W-P1"
+      ]
+    },
+    {
+      "invariant": "schema §4 (AFFECTS/REACHES)",
+      "witnesses": [
+        "W-G1"
+      ]
+    }
+  ],
+  "allowlist": [
+    {
+      "path": "src/factory.mjs",
+      "role": "broker",
+      "rationale": "Test-execution broker: sole child_process site (runNodeTest) with fixed argv execFileSync(process.execPath, ['--test', file], { stdio: 'pipe' }), no shell."
+    },
+    {
+      "path": "src/queue.mjs",
+      "role": "queue",
+      "rationale": "Durable settlement queue (broker boundary for admission/lease/settlement). No spawn primitive today; allowlisted as the queue broker boundary per task."
+    }
+  ]
+}

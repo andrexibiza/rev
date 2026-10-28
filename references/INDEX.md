@@ -26,3 +26,4 @@ Meta: VERSION.md (library version + change rule), primitives.md + invariants.md 
 Ecosystems: ecosystems.md (per-language lenses; platform truth controls).
 Adoption: maintainer-guide.md (tiers, trial protocol, exit assurance).
 Adoption pair: contributor-guide.md (author side).
+Registries: registries.md (reason codes, states, kinds — single source).

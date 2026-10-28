@@ -72,3 +72,11 @@ test("webhook with queue: PR enqueues idempotently", async () => {
   assert.equal(b.body.replayed, true);
   assert.equal(q.size, 1);
 });
+
+test("proof N1: explicit revalidation chain allowed, silent gen change refused", () => {
+  const parent = { authorityId: "a1", principalId: "rev", operation: "REVIEW", policyHash: "h", generation: "g1", payloadDigest: "d", grants: ["READ"] };
+  const silent = validateProof({ ...parent, authorityId: "a2", generation: "g2" }, parent);
+  assert.equal(silent.refusal.reasonCode, "PROOF_STALE_GENERATION");
+  const chained = validateProof({ ...parent, authorityId: "a2", generation: "g2", revalidates: "a1" }, parent);
+  assert.equal(chained.revalidated.from, "g1");
+});

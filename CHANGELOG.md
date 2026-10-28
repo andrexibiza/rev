@@ -64,3 +64,9 @@ All notable changes to Rev are documented here. Format follows Keep a Changelog.
 ## [0.5.0] — 2026-10-28 (Real Hermes plugin)
 ### Added
 - hermes-plugin/rev/: native Hermes plugin (plugin.yaml + register(ctx), 3 tools, bundled skill) + Desktop plugin (desktop/plugin.js, pane+status). Register harness verified (tools match manifest). Doctor attempted — blocked by Hermes dep sync network (PyPI), not plugin code; see hermes-plugin/rev/README.md.
+
+## [0.6.0] — 2026-10-28 (Next phase: federation + live loop plumbing)
+### Added
+- Federated protocol specs (specs/): theory bibliography, Authority/Review/Graph protocols, Federation governance (threshold countersignatures, transparency log, content addressing, reputation slashing — crypto lessons, no tokens). Reference transparency log (src/transparency.mjs, tamper-evident, tested).
+- Real ingestion (src/ingest.mjs): JS/Py consumers + owners into knowledge graph. GitHub live loop (src/github.mjs): App JWT (RS256), installation tokens, diff fetch, merge verify (fake-fetch tested; live needs App key/id).
+- Conformance suite (conformance/run.mjs): 6 witnesses execute real code, REPORT generated. Backlog: N1 revalidation chain, N7 1MB webhook cap, registries.md single source, SDL closure gate. Tests 81+.

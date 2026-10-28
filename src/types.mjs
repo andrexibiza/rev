@@ -22,8 +22,11 @@ export function validateProof(p, parent = null) {
     const widened = (p.grants || []).filter((g) => !(parent.grants || []).includes(g));
     if (widened.length) return refusal("AUTHORITY_WIDENING", `Grants widen beyond parent: ${widened.join(",")}`);
     if (p.generation !== parent.generation && parent.generation) {
-      // Generation change requires explicit revalidation marker; Day 1: refuse.
-      return refusal("PROOF_STALE_GENERATION", "Generation changed since parent proof; revalidate.", true);
+      // Generation change allowed only as explicit revalidation chained to parent authority.
+      if (p.revalidates === parent.authorityId && p.authorityId !== parent.authorityId) {
+        return { proof: p, revalidated: { from: parent.generation, to: p.generation, parentAuthorityId: parent.authorityId } };
+      }
+      return refusal("PROOF_STALE_GENERATION", "Generation changed without revalidates chain; revalidate explicitly.", true);
     }
   }
   return { proof: p };

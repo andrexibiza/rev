@@ -22,8 +22,8 @@ const server = createServer((req, res) => {
     res.end(JSON.stringify({ error: "not_found" }));
     return;
   }
-  const chunks = [];
-  req.on("data", (c) => chunks.push(c));
+  const chunks = []; let size = 0;
+  req.on("data", (c) => { size += c.length; if (size > 1_000_000) { res.writeHead(413, { "content-type": "application/json" }); res.end(JSON.stringify({ error: "payload_too_large" })); req.destroy(); } else chunks.push(c); });
   req.on("end", () => {
     const raw = Buffer.concat(chunks);
     const sig = req.headers["x-hub-signature-256"];
